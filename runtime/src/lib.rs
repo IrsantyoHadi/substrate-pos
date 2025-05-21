@@ -147,8 +147,21 @@ parameter_types! {
 	pub BlockLength: frame_system::limits::BlockLength = frame_system::limits::BlockLength
 		::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 	pub const SS58Prefix: u8 = 42;
+	
+	// Staking parameters
+	pub const SessionsPerEra: sp_staking::SessionIndex = 6;
+	pub const BondingDuration: sp_staking::EraIndex = 24 * 28;
+	pub const SlashDeferDuration: sp_staking::EraIndex = 24 * 7;
+	pub const MaxNominatorRewardedPerValidator: u32 = 64;
+	pub const OffendingValidatorsThreshold: Perbill = Perbill::from_percent(17);
 	pub const StakingMaxValidators: u32 = 100;
 	pub const StakingMaxNominators: u32 = 100;
+	pub const MaxNominations: u32 = 16;
+	pub const MinNominatorBond: Balance = 10 * EXISTENTIAL_DEPOSIT;
+	pub const MinValidatorBond: Balance = 100 * EXISTENTIAL_DEPOSIT;
+	pub const MaxValidatorsPerNominator: u32 = 16;
+	pub const MaxUnlockingChunks: u32 = 32;
+	pub const HistoryDepth: u32 = 84;
 }
 
 // Configure FRAME pallets to include in runtime.
@@ -280,20 +293,8 @@ use pallet_session;
 use pallet_staking;
 use pallet_authorship;
 
-// --- Add parameter_types for staking/session ---
-parameter_types! {
-	pub const SessionsPerEra: sp_staking::SessionIndex = 6;
-	pub const BondingDuration: sp_staking::EraIndex = 24 * 28;
-	pub const SlashDeferDuration: sp_staking::EraIndex = 24 * 7;
-	pub const MaxNominatorRewardedPerValidator: u32 = 64;
-	pub const OffendingValidatorsThreshold: Perbill = Perbill::from_percent(75);
-	pub const SessionDuration: u32 = 6;
-	pub const MaxNominations: u32 = 16;
-}
-
 // --- Reward Curve for staking ---
 use sp_runtime::curve::PiecewiseLinear;
-use pallet_staking::ConvertCurve;
 use pallet_staking::UseNominatorsAndValidatorsMap;
 use pallet_staking::UseValidatorsMap;
 
@@ -328,13 +329,13 @@ impl pallet_staking::Config for Runtime {
 	type SlashDeferDuration = SlashDeferDuration;
 	type AdminOrigin = frame_system::EnsureRoot<AccountId>;
 	type SessionInterface = ();
-	type EraPayout = ConvertCurve<StakingRewardCurve>;
+	type EraPayout = pallet_staking::ConvertCurve<StakingRewardCurve>;
 	type NextNewSession = Session;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
 	type OffendingValidatorsThreshold = OffendingValidatorsThreshold;
 	type MaxUnlockingChunks = ConstU32<32>;
 	type WeightInfo = ();
-	type MaxNominations = ConstU32<16>;
+	type MaxNominations = MaxNominations;
 	type ElectionProvider = frame_election_provider_support::NoElection<(
 		AccountId,
 		BlockNumber,
